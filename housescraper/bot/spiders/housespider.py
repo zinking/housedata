@@ -24,7 +24,8 @@ class HouseSpider(scrapy.Spider):
     def start_requests(self):
         print 'spider start inc mode'
         sources = SourceInfo.objects.all()
-        self.hs_lastpage = {}
+        self.hs_raalastpage = {}
+        self.hs_saalastpage = {}
         self.cm_lastpage = {}
 
         for source in sources:
@@ -128,12 +129,15 @@ class HouseSpider(scrapy.Spider):
                 #simply skip do nothing
                 print 'REPOSITION:error extracting community last page',aid, e
 
+        cm_total = self.extract_field(sel,source,'cm_total')
+        print 'IMPORTANT  area %d has %s communities in total: '%(aid,cm_total)
 
         #requesting all pages
         cpage = 1
         totalpage = DEFAULT_COMMUNITY_PAGES
         if self.cm_lastpage.has_key(aid):
             totalpage = self.cm_lastpage[aid]
+            #totalpage = 2
 
         else:
             print 'WARNING, still didnt get the total page number', aid
@@ -156,59 +160,135 @@ class HouseSpider(scrapy.Spider):
         cm_sels = self.extract_field(sel,source,'cm_list')
         print 'parse community list: ', len(cm_sels)
 
-        cm_total = self.extract_field(sel,source,'cm_total')
-        print 'IMPORTANT  area %d has %s communities in total: '%(aid,cm_total)
-
         for cm_sel in cm_sels:
             cm_id = self.extract_field(cm_sel,source,'cm_id')
             if cm_id == "": continue
             cm_id = int(cm_id)
             print 'extracted community id', cm_id
             curls = source.curl.split(MMS)
-            curpage = 1
-            total_page = DEFAULT_HOUSE_PAGES
 
-            if self.hs_lastpage.has_key(cm_id):
-                total_page = self.hs_lastpage[cm_id]
+            #raa
+            raaurl1 = curls[0] %(cm_id,1)
+            request = scrapy.Request(raaurl1, callback=self.parse_raahouse_first)
+            request.meta['s'] = source
+            request.meta['cm_id'] = cm_id
+            request.meta['type'] = 'rent'
+            request.meta['aid'] = aid
+            request.meta['curls'] = curls
+            print 'request renting community first page', cm_id, raaurl1
+            yield request
 
-            #for i in range(1,DEFAULT_HOUSE_PAGES):
-            while curpage < total_page:
-                ccurl = curls[0] % (cm_id,curpage)
-                request = scrapy.Request(ccurl, callback=self.parse_houses)
-                request.meta['s'] = source
-                request.meta['cm_id'] = cm_id
-                request.meta['page'] = curpage
-                request.meta['type'] = 'rent'
-                request.meta['aid'] = aid
-                print 'request rentiing community', cm_id, ccurl
-                yield request
+            #saa
+            saaurl1 = curls[1] %(cm_id,1)
+            request = scrapy.Request(saaurl1, callback=self.parse_saahouse_first)
+            request.meta['s'] = source
+            request.meta['cm_id'] = cm_id
+            request.meta['type'] = 'sell'
+            request.meta['aid'] = aid
+            request.meta['curls'] = curls
+            print 'request selling community first page', cm_id, saaurl1
+            yield request
 
-                ccurl = curls[1] % (cm_id,curpage)
-                request = scrapy.Request(ccurl, callback=self.parse_houses)
-                request.meta['s'] = source
-                request.meta['cm_id'] = cm_id
-                request.meta['page'] = curpage
-                request.meta['type'] = 'sell'
-                request.meta['aid'] = aid
-                print 'request selling community', cm_id, ccurl
-                yield request
-                curpage +=1
 
+    def parse_raahouse_first(self, response):
+        source = response.meta['s']
+        cm_id = response.meta['cm_id']
+        aid = response.meta['aid']
+        type = response.meta['type']
+        curls = response.meta['curls']
+
+        txt = response.body_as_unicode()
+        sel = Selector(text=txt)
+
+        hs_total = self.extract_field(sel,source,'hs_total')
+        hs_total = int(hs_total)
+        print 'IMPORTANT  community %d has %d rent houses in total: '%(cm_id,hs_total)
+
+        if hs_total == 0 :
+            print 'SKIP PAGE BECAUSE 0 RECORDS'
+            return
+
+        #update last house page along the way
+        #correcting the area cm count total page number along the way
+        if not self.hs_raalastpage.has_key(cm_id) :
+            try:
+                hs_lastpage = self.extract_field(sel,source,'hs_lastpage')
+                hs_lastpage = int(hs_lastpage)
+                self.hs_raalastpage[cm_id] = hs_lastpage
+                print 'PageDisvoer: raa cid %d lp %d '%(cm_id,hs_lastpage)
+            except Exception,e:
+                print 'PageDisvoer: raa cid %d None'%(cm_id)
+
+        curpage = 1
+        total_page = DEFAULT_HOUSE_PAGES
+
+        if self.hs_raalastpage.has_key(cm_id):
+            total_page = self.hs_raalastpage[cm_id]
+        while curpage < total_page:
+            ccurl = curls[0] % (cm_id,curpage)
+            request = scrapy.Request(ccurl, callback=self.parse_houses)
+            request.meta['s'] = source
+            request.meta['cm_id'] = cm_id
+            request.meta['type'] = type
+            request.meta['aid'] = aid
+            print 'request renting community', cm_id, ccurl
+            yield request
+            curpage+=1
+
+
+    def parse_saahouse_first(self, response):
+        source = response.meta['s']
+        cm_id = response.meta['cm_id']
+        aid = response.meta['aid']
+        type = response.meta['type']
+        curls = response.meta['curls']
+
+        txt = response.body_as_unicode()
+        sel = Selector(text=txt)
+
+        hs_total = self.extract_field(sel,source,'hs_total')
+        hs_total = int(hs_total)
+        print 'IMPORTANT  community %d has %d sell houses in total: '%(cm_id,hs_total)
+
+        if hs_total == 0 :
+            print 'SKIP PAGE BECAUSE 0 RECORDS'
+            return
+
+        #update last house page along the way
+        #correcting the area cm count total page number along the way
+        if not self.hs_saalastpage.has_key(cm_id) :
+            try:
+                hs_lastpage = self.extract_field(sel,source,'hs_lastpage')
+                hs_lastpage = int(hs_lastpage)
+                self.hs_saalastpage[cm_id] = hs_lastpage
+                print 'PageDisvoer: saa cid %d lp %d '%(cm_id,hs_lastpage)
+            except Exception,e:
+                print 'PageDisvoer: saa cid %d None'%(cm_id)
+
+
+        curpage = 1
+        total_page = DEFAULT_HOUSE_PAGES
+
+        if self.hs_saalastpage.has_key(cm_id):
+            total_page = self.hs_saalastpage[cm_id]
+        while curpage < total_page:
+            ccurl = curls[0] % (cm_id,curpage)
+            request = scrapy.Request(ccurl, callback=self.parse_houses)
+            request.meta['s'] = source
+            request.meta['cm_id'] = cm_id
+            request.meta['type'] = type
+            request.meta['aid'] = aid
+            print 'request renting community', cm_id, ccurl
+            yield request
+            curpage+=1
 
     def parse_houses(self, response):
         source = response.meta['s']
-        page = response.meta['page']
         cm_id = response.meta['cm_id']
         aid = response.meta['aid']
         type = response.meta['type']
 
         print 'houses page response',response.url
-
-        if self.hs_lastpage.has_key(cm_id):
-            p = self.hs_lastpage[cm_id]
-            if page>p:
-                print 'community page %s %d-%d has reached end, quit'%(type, cm_id, page)
-                return
 
         txt = response.body_as_unicode()
         sel = Selector(text=txt)
@@ -230,24 +310,8 @@ class HouseSpider(scrapy.Spider):
         community.save()
         print '+1 community'
 
-        #update last house page along the way
-         #correcting the area cm count total page number along the way
-        if not self.hs_lastpage.has_key(cm_id) :
-            try:
-                hs_lastpage = self.extract_field(sel,source,'hs_lastpage')
-                hs_lastpage = int(hs_lastpage)
-                self.hs_lastpage[cm_id] = hs_lastpage
-                print cm_id, 'REPOSITION: community of houses last page correct to ', hs_lastpage
-            except Exception,e:
-                #simply skip do nothing
-                print 'REPOSITION: error extracting houses last page',cm_id, e
-
         hs_sels = self.extract_field(sel,source,'hs_list')
 
-        if len(hs_sels) == 0 :
-            print 'community %d - %d have no infomation'%(cm_id,page)
-            self.hs_lastpage[cm_id] = page
-            return
 
         for hs_sel in hs_sels:
             #test if the house row is valid

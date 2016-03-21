@@ -35,6 +35,7 @@ class SourceInfo(models.Model):
 
     hs_list = models.CharField(max_length=255)
     hs_lastpage = models.CharField(max_length=255)
+    hs_total = models.CharField(max_length=255)
 
     ag_phone = models.CharField(max_length=255)
     ag_name = models.CharField(max_length=255)

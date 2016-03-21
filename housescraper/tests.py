@@ -27,6 +27,7 @@ s1 = SourceInfo(
 
     hs_list = "XPATH::/html/body/div[5]/table/tr",
     hs_lastpage = "XPATH::/html/body/div[5]/div[2]/ul/li::INDEX::-5::XPATH::a/text()::EXTR::0",
+    hs_total = "XPATH::/html/body/div[5]/div[1]/span/span/text()::EXTR::0",
 
     ag_phone = "XPATH::td[3]/div/div[2]/p[1]//text()::EXTR::0::REG::(\d+)",
     ag_name = "XPATH::td[3]/div/div[2]/p[1]::EXTR::0::SPLT::0",

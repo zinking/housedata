@@ -130,12 +130,18 @@ s1=ss[0]
 print s1.xpath('td[2]/div/p[1]/a/text()')
 
 #cm list page
+#
 url3 = 'http://sh.sofang.com/home?cityid=332&cityareaid=2992&busid=&pricetype=&housetype=&keywords='
 fetch(url3)
 txt3=response.body_as_unicode()
 sel3 = Selector(text=txt3)
 
 /html/body/div[4]/div[2]/ul/li
+
+url4 = 'http://sh.sofang.com/community/raa729354-1.htm'
+fetch(url4)
+txt4=response.body_as_unicode()
+sel4 = Selector(text=txt4)
 
 
 
