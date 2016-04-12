@@ -11,6 +11,7 @@ import time
 import urllib
 import requests
 
+from captcha import workdir,run_decaptcha
 
 MS = ":"  # meta separator
 MMS = "::"
@@ -18,6 +19,89 @@ COMMA = ","
 
 DEFAULT_COMMUNITY_PAGES = 2
 DEFAULT_HOUSE_PAGES = 100
+
+
+class AnjukeCaptchaSpider(scrapy.Spider):
+    name = "AnjukeCaptchaSpider"
+    def start_requests(self):
+        print 'start cap test synced'
+        blocked_url = "http://www.anjuke.com/captcha-verify/?callback=shield&history=aHR0cDovL3NoLnp1LmFuanVrZS5jb20vZmFuZ3l1YW4vNjU2NzIwNTI%3D"
+        response = self.handle_captcha_response(blocked_url)
+        print 'solved captcha',response.url
+        return
+
+    def start_requests1(self):
+        print 'start cap test'
+        blocked_url = "http://www.anjuke.com/captcha-verify/?callback=shield&history=aHR0cDovL3NoLnp1LmFuanVrZS5jb20vZmFuZ3l1YW4vNjU2NzIwNTI%3D"
+        request = scrapy.Request(blocked_url, meta={'cookiejar': 1}, callback=self.process_captcha)
+        yield  request
+
+    def process_captcha(self, response):
+        curl = response.url
+        txt = response.body_as_unicode()
+        sel = Selector(text=txt)
+        captchar_url = sel.xpath('/html/body/div/div[2]/div/div/div/div[2]/div/form/div[1]/img/@src')[0].extract()
+        filename = "%s.png"%(time.time())
+        r1 = urllib.urlretrieve(captchar_url, workdir+filename)
+        captchacookie = ['ajk_boostup_captcha','7c4793e4c72e7bfffbe6b43b9e9cb67a']
+        try:
+            captchacookie = r1[1]['set-cookie'].split(';')[0].split('=')
+        except Exception,e:
+            print 'error on captcha cookie, will use default as',e
+
+
+        result = run_decaptcha(filename)
+
+        error_txt = sel.xpath('/html/body/div/div[2]/div/div/div/div[2]/div/form/div[2]/span')[0].extract()
+        print 'current error', error_txt.encode('utf-8')
+
+        request = FormRequest.from_response(
+                    response,formnumber=0,
+                    #meta={'cookiejar': response.meta['cookiejar']},
+                    formdata={
+                        'code':result,
+                        'submit':'提交'
+                    },
+                callback=self.process_captcha_result)
+        request.cookies[captchacookie[0]] = captchacookie[1]
+        #request.headers['Cookie'] = captchacookie[0]+'='+captchacookie[1]
+
+        print request.__dict__
+        return [
+                request
+            ]
+
+    def process_captcha_result(self, response):
+        curl = response.url
+        txt = response.body_as_unicode()
+        sel = Selector(text=txt)
+        if curl.find('captcha-verify') != -1:
+
+            error_txt = sel.xpath('/html/body/div/div[2]/div/div/div/div[2]/div/form/div[2]/span')[0].extract()
+            print 'captcha recognition failed',response.status
+            print 'current error', error_txt.encode('utf-8')
+
+            request = scrapy.Request(curl, callback=self.process_captcha)
+            yield  request
+        else :
+            print "wow passed captcha challenge"
+
+    def handle_captcha_response(self, captcha_url):
+        print 'handling captcha page'
+        self.crawler.engine.pause()
+
+        times = 0
+        while captcha_url.find('captcha-verify') != -1:
+            data_post = {
+                'code':'',
+                'submit':'提交'
+            }
+            response = requests.post(captcha_url, data=data_post)
+            captcha_url = response.url
+            times+=1
+            print 'trying solving captcha', times,'times'
+        self.crawler.engine.start()
+        return response
 
 
 class AnjukeHouseSpider(scrapy.Spider):
