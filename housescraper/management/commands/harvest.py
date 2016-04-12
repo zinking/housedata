@@ -1,3 +1,4 @@
+from housescraper.bot.spiders.lianjiahousespider import LianjiaHouseSpider
 
 __author__ = 'awang'
 
@@ -28,6 +29,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options['inc'] == 'ajk' : self.handle_ajk()
         if options['inc'] == 'cap' : self.handle_cap()
+        if options['inc'] == 'lj' :  self.handle_lj()
 
 
     def handle_cap(self):
@@ -43,5 +45,13 @@ class Command(BaseCommand):
         runner = CrawlerRunner(crawler_setting)
         #d = runner.crawl(HouseSpider)
         d = runner.crawl(AnjukeHouseSpider)
+        d.addBoth(lambda _: reactor.stop())
+        reactor.run()
+
+    def handle_lj(self):
+        configure_logging({'LOG_FORMAT': '%(levelname)s: %(message)s'})
+        runner = CrawlerRunner(crawler_setting)
+        #d = runner.crawl(HouseSpider)
+        d = runner.crawl(LianjiaHouseSpider)
         d.addBoth(lambda _: reactor.stop())
         reactor.run()

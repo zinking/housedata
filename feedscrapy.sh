@@ -166,6 +166,16 @@ sel3 = Selector(text=txt3)
 
 
 
+############################################
+
+url4='http://sh.lianjia.com/xiaoqu/d1'
+
+fetch(url4)
+from scrapy import Selector
+txt3=response.body_as_unicode()
+sel3 = Selector(text=txt3)
+
+
 
 
 
