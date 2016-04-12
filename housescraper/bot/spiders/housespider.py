@@ -19,11 +19,11 @@ DEFAULT_HOUSE_PAGES = 100
 
 
 class HouseSpider(scrapy.Spider):
-    name = "HouseSpider"
+    name = "SofangHouseSpider"
 
     def start_requests(self):
         print 'spider start inc mode'
-        sources = SourceInfo.objects.all()
+        sources = SourceInfo.objects.get(name='sofang')
         self.hs_raalastpage = {}
         self.hs_saalastpage = {}
         self.cm_lastpage = {}

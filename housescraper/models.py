@@ -33,6 +33,15 @@ class SourceInfo(models.Model):
     cm_pcom = models.CharField(max_length=255)
     cm_ccom = models.CharField(max_length=255)
 
+    cm_area = models.CharField(max_length=255, null=True)
+    cm_onrent = models.CharField(max_length=255, null=True)
+    cm_onsale = models.CharField(max_length=255, null=True)
+    cm_count = models.CharField(max_length=255, null=True)
+    cm_parklot = models.CharField(max_length=255, null=True)
+    cm_greenrate = models.CharField(max_length=255, null=True)
+    cm_rentrate = models.CharField(max_length=255, null=True)
+    cm_holdrate = models.CharField(max_length=255, null=True)
+
     hs_list = models.CharField(max_length=255)
     hs_lastpage = models.CharField(max_length=255)
     hs_total = models.CharField(max_length=255)
@@ -65,6 +74,16 @@ class Community(models.Model):
     pfee = models.CharField(max_length=1024)
     pcompany = models.CharField(max_length=1024)
     ccompany = models.CharField(max_length=1024)
+
+    area = models.CharField(max_length=50, null=True)
+    count = models.CharField(max_length=50, null=True)
+    onrent = models.CharField(max_length=50, null=True)
+    onsale = models.CharField(max_length=50, null=True)
+    parklot = models.CharField(max_length=50, null=True)
+    greenrate = models.CharField(max_length=50, null=True)
+    rentrate = models.CharField(max_length=50, null=True)
+    holdrate = models.CharField(max_length=50, null=True) #rongji lv
+
 
 class Agent(models.Model):
     sid = models.BigIntegerField()

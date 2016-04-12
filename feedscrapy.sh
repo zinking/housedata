@@ -145,6 +145,27 @@ sel4 = Selector(text=txt4)
 
 
 
+#############################################
+url1="http://shanghai.anjuke.com/sale/pudong/p1/#filtersort"
+fetch(url1)
+
+url2="http://shanghai.anjuke.com/prop/view/A452471080?from=structured_dict-saleMetro&spread=filtersearch_p&equid=2016032774b31061-0c&ab=expclick-AJKERSHOUFANG_101_65949717"
+fetch(url2)
+from scrapy import Selector
+txt3=response.body_as_unicode()
+sel3 = Selector(text=txt3)
+s1=sel3.xpath('/html/body/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]/div/div[1]/div[1]/dl[1]/dd//text()')
+
+
+url4='http://sh.zu.anjuke.com/fangyuan/pudong/p2/'
+
+fetch(url4)
+from scrapy import Selector
+txt3=response.body_as_unicode()
+sel3 = Selector(text=txt3)
+
+
+
 
 
 

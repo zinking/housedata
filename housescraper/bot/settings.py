@@ -38,10 +38,20 @@ ITEM_PIPELINES = {
 #IMAGES_MIN_HEIGHT = 768
 #IMAGES_MIN_WIDTH  = 1024
 
+DOWNLOAD_DELAY = 0.1
+
+DOWNLOADER_MIDDLEWARES = {
+    'scrapy.downloadermiddlewares.cookies.CookiesMiddleware':543
+}
+
+COOKIES_DEBUG = True
 
 from scrapy.settings import Settings
 crawler_setting = Settings()
 crawler_setting.set('USER_AGENT',USER_AGENT)
+#crawler_setting.set('COOKIES_DEBUG',COOKIES_DEBUG)
+crawler_setting.set('DOWNLOAD_DELAY',DOWNLOAD_DELAY)
+crawler_setting.set('DOWNLOADER_MIDDLEWARES',DOWNLOADER_MIDDLEWARES)
 #crawler_setting.set('ITEM_PIPELINES',ITEM_PIPELINES)
 #crawler_setting.set('IMAGES_STORE',IMAGES_STORE)
 #crawler_setting.set('IMAGES_MIN_HEIGHT',IMAGES_MIN_HEIGHT)
